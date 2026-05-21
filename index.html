@@ -9,7 +9,16 @@
 <meta name="x5-orientation" content="landscape">
 <meta name="screen-orientation" content="landscape">
 <meta name="theme-color" content="#1a1a2e">
+<meta name="description" content="GTA-style top-down driving game with missions, police chases, and open world">
+<meta name="application-name" content="City Drive">
+<meta name="msapplication-TileColor" content="#1a1a2e">
+<meta name="msapplication-navbutton-color" content="#1a1a2e">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="192x192" href="assets/image/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="assets/image/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="assets/image/icon-144.png">
 <title>City Drive - GTA Style</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -29,10 +38,11 @@ canvas{display:block;image-rendering:pixelated}
 .spinner{width:60px;height:60px;border:4px solid #333;border-top-color:#cc2222;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #loadingOverlay p{margin-top:1.5rem;color:#888;letter-spacing:0.2em}
-/* ===== FORCE LANDSCAPE — rotate 90° when phone held vertically ===== */
-@media (orientation:portrait){
-  body{transform:rotate(90deg);transform-origin:top left;width:100vh;height:100vw;position:absolute;top:0;left:100vw}
-}
+#portraitBlocker{position:fixed;inset:0;z-index:9999;background:#0a0a1a;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center}
+#portraitBlocker .icon{font-size:64px;margin-bottom:20px;transform:rotate(90deg)}
+#portraitBlocker h2{font-size:1.5rem;color:#cc2222;margin-bottom:10px;font-weight:bold}
+#portraitBlocker p{color:#888;font-size:0.9rem;max-width:280px;line-height:1.6}
+#portraitBlocker button{margin-top:30px;background:#cc2222;color:#fff;border:none;padding:0.8rem 2rem;font-size:1rem;font-family:monospace;font-weight:bold;border-radius:4px;cursor:pointer}
 #gameContainer{width:100vw;height:100vh;overflow:hidden;background:#000;position:relative;touch-action:none;display:none}
 
 #restartBtn{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);z-index:30;display:none;background:linear-gradient(135deg,#cc2222,#991111);color:#fff;border:none;padding:1rem 3rem;font-size:1.2rem;font-family:monospace;font-weight:bold;letter-spacing:0.15em;cursor:pointer;border-radius:4px;box-shadow:0 0 30px rgba(204,34,34,0.6);animation:pulse 1.5s ease-in-out infinite}
@@ -43,50 +53,13 @@ canvas{display:block;image-rendering:pixelated}
 .touch-brk{background:rgba(255,50,50,0.2)!important;border:2px solid rgba(255,50,50,0.3)!important;color:rgba(255,100,100,0.6)!important}
 .touch-rev{width:50px!important;height:50px!important;font-size:14px!important;background:rgba(255,165,0,0.15)!important;border:2px solid rgba(255,165,0,0.25)!important;color:rgba(255,165,0,0.5)!important;position:absolute;right:90px;bottom:100px;pointer-events:auto}
 
-/* ===== CUTSCENE ===== */
-#cutsceneOverlay{position:fixed;inset:0;z-index:100;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
-#cutsceneCanvas{position:absolute;inset:0;width:100%;height:100%}
-#csLetterTop,#csLetterBot{position:absolute;left:0;right:0;background:#000;z-index:2;transition:height 0.6s ease}
-#csLetterTop{top:0;height:12vh}
-#csLetterBot{bottom:0;height:12vh}
-#csContent{position:relative;z-index:3;width:80%;max-width:900px;text-align:center;pointer-events:none}
-#csSpeaker{font-size:clamp(0.9rem,2vw,1.3rem);color:#cc2222;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:1rem;opacity:0;transition:opacity 0.4s;font-weight:bold;text-shadow:0 0 20px rgba(204,34,34,0.5)}
-#csText{font-size:clamp(1rem,2.5vw,1.6rem);color:#ddd;line-height:1.7;min-height:3em;text-shadow:0 2px 8px rgba(0,0,0,0.8)}
-#csText .cursor{display:inline-block;width:2px;height:1.2em;background:#cc2222;margin-left:2px;vertical-align:text-bottom;animation:csBlink 0.6s step-end infinite}
-@keyframes csBlink{0%,100%{opacity:1}50%{opacity:0}}
-#csSkip{position:absolute;bottom:14vh;right:3vw;z-index:4;color:#555;font-size:0.8rem;letter-spacing:0.15em;font-family:monospace;pointer-events:auto;opacity:0;transition:opacity 0.5s}
-#csSkip.show{opacity:1}
-#csSceneLabel{position:absolute;top:14vh;left:3vw;z-index:4;color:#444;font-size:0.7rem;letter-spacing:0.3em;font-family:monospace;text-transform:uppercase;opacity:0;transition:opacity 0.5s}
-#csSceneLabel.show{opacity:1}
-#csTitle{position:relative;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center}
-#csTitle h1{font-size:clamp(2.5rem,8vw,5.5rem);color:#cc2222;font-weight:bold;letter-spacing:0.12em;margin:0;text-shadow:0 0 60px rgba(204,34,34,0.6),0 0 120px rgba(204,34,34,0.3)}
-#csTitle .sub{color:#8888aa;font-size:clamp(0.8rem,2vw,1.2rem);letter-spacing:0.3em;margin-top:0.5rem}
-
 </style>
 </head>
 <body>
 <div id="startScreen"><div class="bg" id="startBg"></div><div class="title"><h1>CITY DRIVE</h1><p class="sub">GTA STYLE</p><div class="btns"><button class="btn-play" id="playBtn">&#9654; PLAY</button></div><div class="controls-info"><p>WASD / Arrow Keys - Drive</p><p>SPACE - Brake / Drift</p><p>E - Skip mission dialogue</p><p>Touch controls on mobile</p></div></div></div>
 <div id="gameContainer"><canvas id="gameCanvas"></canvas><div id="loadingOverlay"><div class="spinner"></div><p>ЗАГРУЗКА ГОРОДА...</p></div><button id="restartBtn">&#9654; ЗАНОВО (R)</button><div id="touchControls"><div style="position:absolute;left:10px;bottom:20px;display:flex;gap:8px"><button class="touch-btn" id="tLeft">&#9664;</button><button class="touch-btn" id="tRight">&#9654;</button></div><div style="position:absolute;right:10px;bottom:20px;display:flex;gap:8px"><button class="touch-btn touch-brk" id="tBrk">BRK</button><button class="touch-btn touch-gas" id="tGas">GAS</button></div><button class="touch-btn touch-rev" id="tRev">REV</button></div></div>
-
-<div id="cutsceneOverlay"><canvas id="cutsceneCanvas"></canvas><div id="csLetterTop"></div><div id="csLetterBot"></div><div id="csSceneLabel"></div><div id="csContent"><div id="csSpeaker"></div><div id="csText"></div></div><div id="csTitle"><h1>CITY DRIVE</h1><p class="sub">GTA STYLE</p></div><div id="csSkip">[ПРОБЕЛ] ПРОПУСТИТЬ</div></div>
+<div id="portraitBlocker"><div class="icon">&#128241;</div><h2>ПОВЕРНИТЕ УСТРОЙСТВО</h2><p>Игра поддерживает только горизонтальный (ландшафтный) режим</p></div>
 <script>
-// Unlock Audio on first user interaction (browsers block autoplay)
-var _audioUnlocked=false;
-function _unlockAudio(){
-  if(_audioUnlocked)return;
-  _audioUnlocked=true;
-  // Create and resume AudioContext
-  try{
-    var AC=window.AudioContext||window.webkitAudioContext;
-    if(AC){var ctx=new AC();if(ctx.resume)ctx.resume();ctx.close()}
-  }catch(e){}
-  // Unlock HTML5 Audio by playing silence
-  try{var s=new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAgAAAbAAkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQ//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAbD/2Q==');s.volume=0.01;s.play().catch(function(){})}catch(e){}
-}
-document.addEventListener('touchstart',_unlockAudio,{once:true,passive:true});
-document.addEventListener('click',_unlockAudio,{once:true,passive:true});
-document.addEventListener('keydown',_unlockAudio,{once:true,passive:true});
-
 var TILE_SIZE=64,MAP_W=80,MAP_H=80,CAR_W=28,CAR_H=48,NPC_COUNT=25,MAX_PARTICLES=200,MAX_SKID_MARKS=200,MINIMAP_SIZE=120,MINIMAP_UPDATE_INTERVAL=6,PED_COUNT=30,PED_RESPAWN_DIST=2500;
 
 function SpriteGenerator(){this.cache=new Map()}
@@ -2794,488 +2767,28 @@ GameEngine.prototype.renderBustedOverlay=function(w,h){
 };
 
 // ============================================================
-// CUTSCENE ENGINE — Cinematic intro sequence
-// ============================================================
-function CutsceneEngine(onComplete){
-  this.overlay=document.getElementById('cutsceneOverlay');
-  this.canvas=document.getElementById('cutsceneCanvas');
-  this.ctx=this.canvas.getContext('2d');
-  this.speakerEl=document.getElementById('csSpeaker');
-  this.textEl=document.getElementById('csText');
-  this.labelEl=document.getElementById('csSceneLabel');
-  this.skipEl=document.getElementById('csSkip');
-  this.titleEl=document.getElementById('csTitle');
-  this.contentEl=document.getElementById('csContent');
-  this.onComplete=onComplete;
-  this.running=false;
-  this.skipped=false;
-  this.sceneIndex=0;
-  this.charIndex=0;
-  this.typingTimer=null;
-  this.sceneTimer=null;
-  this.bgAnimFrame=null;
-  this.particles=[];
-  this.fadeAlpha=0;
-  this.time=0;
-  this.currentAudio=null; // currently playing voice audio
-
-  // Preload voice files
-  this.voiceClips={};
-  var voiceFiles=[
-    'cs01_narration_prison.mp3','cs02_narration_accused.mp3','cs03_narration_free.mp3',
-    'cs04_viktor_recognize.mp3','cs05_viktor_cops.mp3','cs06_viktor_city.mp3',
-    'cs07_viktor_car.mp3','cs08_viktor_earn.mp3','cs09_narration_revenge.mp3'
-  ];
-  for(var v=0;v<voiceFiles.length;v++){
-    var a=new Audio('assets/voice/'+voiceFiles[v]);
-    a.preload='auto';
-    a.volume=1.0;
-    this.voiceClips[voiceFiles[v]]=a;
-  }
-
-  // Story scenes — each has a voice file
-  this.scenes=[
-    {
-      type:'narration', speaker:'', label:'ГЛАВА I — НАЧАЛО',
-      text:'Пять лет назад тебя подставили.',
-      bg:'prison', duration:4500, voice:'cs01_narration_prison.mp3'
-    },
-    {
-      type:'narration', speaker:'', label:'',
-      text:'Обвинили в налёте на инкассаторскую машину, которую ты не совершал. Пять лет в камере без единого шанса на апелляцию.',
-      bg:'prison', duration:6500, voice:'cs02_narration_accused.mp3'
-    },
-    {
-      type:'narration', speaker:'', label:'',
-      text:'Но сегодня двери тюрьмы наконец открылись. Ты — на свободе.',
-      bg:'gate', duration:4500, voice:'cs03_narration_free.mp3'
-    },
-    {
-      type:'dialogue', speaker:'ВИКТОР', label:'',
-      text:'Эй! Не узнаёшь? Это я, Виктор! Мы вместе бегали в девяностых, помнишь?',
-      bg:'city_night', duration:5500, voice:'cs04_viktor_recognize.mp3'
-    },
-    {
-      type:'dialogue', speaker:'ВИКТОР', label:'',
-      text:'Я видел, как тебя повели тогда. Знал, что ты не виноват. Но копы... они работают на других людей.',
-      bg:'city_night', duration:6500, voice:'cs05_viktor_cops.mp3'
-    },
-    {
-      type:'dialogue', speaker:'ВИКТОР', label:'',
-      text:'Город изменился, пока тебя не было. Старые ребята разбежались. Но кое-кто ещё помнит тебя. И твои долги — тоже никто не забыл.',
-      bg:'city_night', duration:7000, voice:'cs06_viktor_city.mp3'
-    },
-    {
-      type:'dialogue', speaker:'ВИКТОР', label:'',
-      text:'Но мы начнём с малого. Вот — твоя старая тачка. Она ещё бегает. Едва, но бегает.',
-      bg:'car', duration:5500, voice:'cs07_viktor_car.mp3'
-    },
-    {
-      type:'dialogue', speaker:'ВИКТОР', label:'',
-      text:'Заработай денег. Набери силу. А когда будешь готов... мы поговорим о тех, кто тебя посадил.',
-      bg:'city_night', duration:6500, voice:'cs08_viktor_earn.mp3'
-    },
-    {
-      type:'narration', speaker:'', label:'',
-      text:'Они думали, что ты сломался. Они ошибались.',
-      bg:'city_night', duration:4000, voice:'cs09_narration_revenge.mp3'
-    },
-    {
-      type:'title', duration:4000
-    }
-  ];
-}
-
-CutsceneEngine.prototype.start=function(){
-  var self=this;
-  this.running=true;
-  this.skipped=false;
-  this.overlay.style.display='flex';
-  this.contentEl.style.display='block';
-  this.titleEl.style.display='none';
-  this.resizeCanvas();
-  window.addEventListener('resize',function(){self.resizeCanvas()});
-
-  // Init particles for background effects
-  this.particles=[];
-  for(var i=0;i<60;i++){
-    this.particles.push({
-      x:Math.random()*this.canvas.width,
-      y:Math.random()*this.canvas.height,
-      vx:(Math.random()-0.5)*0.5,
-      vy:(Math.random()-0.5)*0.3-0.2,
-      size:Math.random()*2+0.5,
-      alpha:Math.random()*0.4+0.1
-    });
-  }
-
-  // Start background animation
-  this.fadeAlpha=1;
-  this.animateBg();
-
-  // Click/tap to advance
-  this.overlay.onclick=function(){self.advance()};
-  document.addEventListener('keydown',this._keyHandler=function(e){
-    if(e.key===' '||e.key==='Enter'||e.key==='e'||e.key==='E'){
-      e.preventDefault();
-      self.advance();
-    }
-  });
-
-  // Show skip hint after a short delay
-  setTimeout(function(){if(self.running)self.skipEl.classList.add('show')},2000);
-
-  // Start first scene
-  this.sceneIndex=0;
-  this.playScene(0);
-};
-
-CutsceneEngine.prototype.resizeCanvas=function(){
-  this.canvas.width=window.innerWidth;
-  this.canvas.height=window.innerHeight;
-};
-
-CutsceneEngine.prototype.advance=function(){
-  if(!this.running)return;
-  // If still typing, complete immediately
-  if(this.charIndex<this.scenes[this.sceneIndex].text.length){
-    this.charIndex=this.scenes[this.sceneIndex].text.length;
-    this.textEl.innerHTML=this.scenes[this.sceneIndex].text;
-    return;
-  }
-  // Otherwise skip to next scene
-  this.nextScene();
-};
-
-CutsceneEngine.prototype.nextScene=function(){
-  clearTimeout(this.typingTimer);
-  clearTimeout(this.sceneTimer);
-  this.sceneIndex++;
-  if(this.sceneIndex>=this.scenes.length){
-    this.end();
-    return;
-  }
-  this.playScene(this.sceneIndex);
-};
-
-CutsceneEngine.prototype.playScene=function(idx){
-  var scene=this.scenes[idx];
-  var self=this;
-  if(!scene)return;
-
-  // Stop previous audio
-  this.stopVoice();
-
-  // Scene label
-  this.labelEl.textContent=scene.label||'';
-  if(scene.label)this.labelEl.classList.add('show');
-  else this.labelEl.classList.remove('show');
-
-  if(scene.type==='title'){
-    // Title card
-    this.contentEl.style.display='none';
-    this.titleEl.style.display='flex';
-    this.labelEl.classList.remove('show');
-    this.sceneTimer=setTimeout(function(){self.nextScene()},scene.duration);
-    return;
-  }
-
-  this.contentEl.style.display='block';
-  this.titleEl.style.display='none';
-
-  // Speaker name
-  if(scene.speaker){
-    this.speakerEl.textContent=scene.speaker;
-    this.speakerEl.style.opacity='1';
-  }else{
-    this.speakerEl.style.opacity='0';
-  }
-
-  // Play voice audio for this scene
-  if(scene.voice&&this.voiceClips[scene.voice]){
-    this.currentAudio=this.voiceClips[scene.voice];
-    this.currentAudio.currentTime=0;
-    var self2=this;
-    // When audio ends, advance to next scene
-    this.currentAudio.onended=function(){if(self2.running)self2.nextScene()};
-    this.currentAudio.play().catch(function(){});
-  }
-
-  // Typewriter effect
-  this.charIndex=0;
-  this.textEl.innerHTML='<span class="cursor"></span>';
-  this.typeWriter(scene.text,0,function(){
-    // After typing complete — if no voice, use timer; if voice, onended handles it
-    if(!scene.voice||!self.voiceClips[scene.voice]){
-      self.sceneTimer=setTimeout(function(){self.nextScene()},scene.duration-self.charIndex*35);
-    }
-    // If voice exists, audio.onended will trigger nextScene after it finishes
-  });
-};
-
-CutsceneEngine.prototype.typeWriter=function(text,i,callback){
-  if(!this.running||this.skipped)return;
-  if(i<=text.length){
-    this.charIndex=i;
-    var display=text.substring(0,i);
-    this.textEl.innerHTML=display+'<span class="cursor"></span>';
-    if(i<text.length){
-      var delay=35;
-      // Pause longer on punctuation
-      if(text[i]==='.'||text[i]==='!'||text[i]==='?')delay=200;
-      else if(text[i]===',')delay=100;
-      var self=this;
-      this.typingTimer=setTimeout(function(){self.typeWriter(text,i+1,callback)},delay);
-    }else{
-      // Typing complete
-      if(callback)callback();
-    }
-  }
-};
-
-CutsceneEngine.prototype.animateBg=function(){
-  if(!this.running)return;
-  var self=this;
-  var ctx=this.ctx;
-  var w=this.canvas.width;
-  var h=this.canvas.height;
-  this.time+=0.016;
-
-  // Determine current bg type
-  var bg='city_night';
-  if(this.sceneIndex<this.scenes.length){
-    bg=this.scenes[this.sceneIndex].bg||'city_night';
-  }
-
-  // Draw background based on type
-  if(bg==='prison'){
-    // Dark concrete, bars
-    var grad=ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0,'#0a0a0f');
-    grad.addColorStop(0.5,'#151520');
-    grad.addColorStop(1,'#0a0a0f');
-    ctx.fillStyle=grad;
-    ctx.fillRect(0,0,w,h);
-    // Prison bars
-    ctx.strokeStyle='#222';
-    ctx.lineWidth=6;
-    for(var i=0;i<8;i++){
-      var bx=w*0.3+i*(w*0.05);
-      ctx.beginPath();ctx.moveTo(bx,h*0.1);ctx.lineTo(bx,h*0.9);ctx.stroke();
-    }
-    // Faint light from window
-    ctx.fillStyle='rgba(40,40,60,0.3)';
-    ctx.beginPath();ctx.ellipse(w*0.5,h*0.15,w*0.25,h*0.15,0,0,Math.PI*2);ctx.fill();
-  }else if(bg==='gate'){
-    // Gate opening, light flooding in
-    var grad=ctx.createRadialGradient(w*0.5,h*0.4,0,w*0.5,h*0.4,w*0.6);
-    grad.addColorStop(0,'rgba(60,50,30,0.5)');
-    grad.addColorStop(0.5,'rgba(20,18,15,0.8)');
-    grad.addColorStop(1,'#0a0a0a');
-    ctx.fillStyle=grad;
-    ctx.fillRect(0,0,w,h);
-    // Light beam
-    ctx.fillStyle='rgba(80,70,40,0.15)';
-    ctx.beginPath();ctx.moveTo(w*0.35,0);ctx.lineTo(w*0.65,0);ctx.lineTo(w*0.8,h);ctx.lineTo(w*0.2,h);ctx.fill();
-  }else if(bg==='car'){
-    // Car reveal — spotlight on red car
-    var grad=ctx.createRadialGradient(w*0.5,h*0.6,0,w*0.5,h*0.6,w*0.4);
-    grad.addColorStop(0,'rgba(80,20,15,0.4)');
-    grad.addColorStop(0.5,'rgba(15,12,12,0.7)');
-    grad.addColorStop(1,'#0a0a0a');
-    ctx.fillStyle=grad;
-    ctx.fillRect(0,0,w,h);
-    // Car silhouette
-    ctx.fillStyle='rgba(150,30,20,0.25)';
-    ctx.beginPath();
-    ctx.moveTo(w*0.35,h*0.55);
-    ctx.lineTo(w*0.4,h*0.42);
-    ctx.lineTo(w*0.6,h*0.42);
-    ctx.lineTo(w*0.65,h*0.55);
-    ctx.lineTo(w*0.67,h*0.62);
-    ctx.lineTo(w*0.33,h*0.62);
-    ctx.closePath();
-    ctx.fill();
-    // Headlights glow
-    ctx.fillStyle='rgba(255,255,150,0.15)';
-    ctx.beginPath();ctx.ellipse(w*0.4,h*0.44,15,8,0,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.ellipse(w*0.6,h*0.44,15,8,0,0,Math.PI*2);ctx.fill();
-  }else{
-    // City night — buildings, neon
-    var grad=ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0,'#05050f');
-    grad.addColorStop(0.6,'#0a0a1a');
-    grad.addColorStop(1,'#0f0f1f');
-    ctx.fillStyle=grad;
-    ctx.fillRect(0,0,w,h);
-    // Skyline
-    ctx.fillStyle='#0c0c18';
-    var buildings=[
-      [0.05,0.35,0.08],[0.15,0.25,0.06],[0.23,0.4,0.07],[0.32,0.2,0.05],
-      [0.4,0.3,0.06],[0.48,0.15,0.07],[0.57,0.35,0.05],[0.64,0.22,0.08],
-      [0.74,0.38,0.06],[0.82,0.18,0.07],[0.9,0.32,0.06]
-    ];
-    for(var b=0;b<buildings.length;b++){
-      var bx=buildings[b][0]*w,by=buildings[b][1]*h,bw=buildings[b][2]*w;
-      ctx.fillRect(bx,by,bw,h-by);
-      // Windows
-      ctx.fillStyle='rgba(255,200,80,0.15)';
-      for(var wy=by+10;wy<h*0.7;wy+=18){
-        for(var wx=bx+4;wx<bx+bw-4;wx+=10){
-          if(Math.random()>0.4)ctx.fillRect(wx,wy,5,8);
-        }
-      }
-      ctx.fillStyle='#0c0c18';
-    }
-    // Neon signs
-    var neonColors=['rgba(204,34,34,0.4)','rgba(34,100,204,0.3)','rgba(204,34,150,0.3)','rgba(34,204,100,0.25)'];
-    for(var n=0;n<4;n++){
-      var nx=w*(0.15+n*0.2),ny=h*0.3+Math.sin(this.time*0.5+n)*20;
-      ctx.fillStyle=neonColors[n];
-      ctx.fillRect(nx,ny,40,12);
-      ctx.fillStyle=neonColors[n].replace(/[\d.]+\)$/,'0.1)');
-      ctx.beginPath();ctx.ellipse(nx+20,ny+6,30,15,0,0,Math.PI*2);ctx.fill();
-    }
-  }
-
-  // Floating particles (rain/dust)
-  for(var p=0;p<this.particles.length;p++){
-    var pt=this.particles[p];
-    pt.x+=pt.vx;
-    pt.y+=pt.vy;
-    if(pt.y<0){pt.y=h;pt.x=Math.random()*w}
-    if(pt.x<0)pt.x=w;
-    if(pt.x>w)pt.x=0;
-    ctx.fillStyle='rgba(180,180,220,'+pt.alpha+')';
-    ctx.fillRect(pt.x,pt.y,pt.size,pt.size*3);
-  }
-
-  // Vignette
-  var vgrad=ctx.createRadialGradient(w/2,h/2,w*0.2,w/2,h/2,w*0.7);
-  vgrad.addColorStop(0,'rgba(0,0,0,0)');
-  vgrad.addColorStop(1,'rgba(0,0,0,0.6)');
-  ctx.fillStyle=vgrad;
-  ctx.fillRect(0,0,w,h);
-
-  // Film grain
-  ctx.globalAlpha=0.03;
-  for(var g=0;g<50;g++){
-    ctx.fillStyle=Math.random()>0.5?'#fff':'#000';
-    ctx.fillRect(Math.random()*w,Math.random()*h,2,2);
-  }
-  ctx.globalAlpha=1;
-
-  this.bgAnimFrame=requestAnimationFrame(function(){self.animateBg()});
-};
-
-CutsceneEngine.prototype.stopVoice=function(){
-  if(this.currentAudio){
-    this.currentAudio.onended=null;
-    this.currentAudio.pause();
-    this.currentAudio.currentTime=0;
-    this.currentAudio=null;
-  }
-};
-
-CutsceneEngine.prototype.end=function(){
-  this.running=false;
-  this.skipped=false;
-  this.stopVoice();
-  clearTimeout(this.typingTimer);
-  clearTimeout(this.sceneTimer);
-  cancelAnimationFrame(this.bgAnimFrame);
-  if(this._keyHandler){
-    document.removeEventListener('keydown',this._keyHandler);
-    this._keyHandler=null;
-  }
-  this.overlay.onclick=null;
-  this.skipEl.classList.remove('show');
-  this.labelEl.classList.remove('show');
-
-  // Fade out
-  var self=this;
-  var fadeStep=0;
-  function fadeOut(){
-    fadeStep+=0.03;
-    if(fadeStep>=1){
-      self.overlay.style.display='none';
-      self.contentEl.style.display='block';
-      self.titleEl.style.display='none';
-      if(self.onComplete)self.onComplete();
-      return;
-    }
-    self.overlay.style.opacity=1-fadeStep;
-    requestAnimationFrame(fadeOut);
-  }
-  fadeOut();
-};
-
-CutsceneEngine.prototype.skip=function(){
-  if(!this.running)return;
-  this.running=false;
-  this.skipped=true;
-  this.stopVoice();
-  clearTimeout(this.typingTimer);
-  clearTimeout(this.sceneTimer);
-  cancelAnimationFrame(this.bgAnimFrame);
-  if(this._keyHandler){
-    document.removeEventListener('keydown',this._keyHandler);
-    this._keyHandler=null;
-  }
-  this.overlay.onclick=null;
-  this.skipEl.classList.remove('show');
-  this.labelEl.classList.remove('show');
-  this.overlay.style.display='none';
-  this.overlay.style.opacity='1';
-  this.contentEl.style.display='block';
-  this.titleEl.style.display='none';
-  if(this.onComplete)this.onComplete();
-};
-
-// ============================================================
 // UI CONTROLLER
 // ============================================================
 (function(){
   var startScreen=document.getElementById('startScreen'),gameContainer=document.getElementById('gameContainer');
   var loadingOverlay=document.getElementById('loadingOverlay');
   var restartBtn=document.getElementById('restartBtn'),touchControls=document.getElementById('touchControls');
-  var startBg=document.getElementById('startBg');
+  var portraitBlocker=document.getElementById('portraitBlocker'),startBg=document.getElementById('startBg');
   var canvas=document.getElementById('gameCanvas'),engine=null,gameState='start';
   var isTouchDevice='ontouchstart' in window||navigator.maxTouchPoints>0;
   var bh=[120,145,98,167,189,112,198,118,175,182,148,196,142,139,127,82,109,131,176,183];
   for(var i=0;i<bh.length;i++){var div=document.createElement('div');div.style.cssText='position:absolute;left:'+(5+(i%5)*20)+'%;top:'+(20+Math.floor(i/5)*20)+'%;width:60px;height:'+bh[i]+'px;background:hsl('+(220+i*10)+',30%,'+(15+i*2)+'%);border-radius:2px';startBg.appendChild(div)}
   if(isTouchDevice)touchControls.style.display='block';
-  // Force fullscreen on any touch/click + lock landscape
+  // Auto fullscreen + landscape lock
   function goFullscreen(){
     try{var el=document.documentElement;if(!document.fullscreenElement){if(el.requestFullscreen)el.requestFullscreen();else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();else if(el.msRequestFullscreen)el.msRequestFullscreen()}}catch(e){}
-    try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){})}catch(e){}
+    try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape')}catch(e){}
   }
-  // Enter fullscreen on first user interaction (any touch/click)
-  document.addEventListener('touchstart',goFullscreen,{once:false,passive:true});
-  document.addEventListener('click',goFullscreen,{once:false,passive:true});
-  var cutscenePlayed=false; // Track if intro cutscene was shown
+  function checkOrientation(){var l=window.innerWidth>window.innerHeight;if(!l&&isTouchDevice)portraitBlocker.style.display='flex';else portraitBlocker.style.display='none'}
+  checkOrientation();window.addEventListener('resize',checkOrientation);window.addEventListener('orientationchange',checkOrientation);if(screen.orientation)screen.orientation.addEventListener('change',checkOrientation);
   function startGame(){gameState='loading';startScreen.style.display='none';gameContainer.style.display='block';loadingOverlay.style.display='flex';restartBtn.style.display='none';
-    _unlockAudio();
-    // Pre-start first voice clip in user gesture chain so browser allows playback
-    if(!cutscenePlayed){
-      try{var _preAudio=new Audio('assets/voice/cs01_narration_prison.mp3');_preAudio.volume=0.01;_preAudio.play().then(function(){_preAudio.pause();_preAudio.currentTime=0}).catch(function(){})}catch(e){}
-    }
-    requestAnimationFrame(function(){engine=new GameEngine(canvas);engine.onReady=function(){
-      if(!cutscenePlayed){
-        // Show cutscene before first gameplay
-        gameState='cutscene';
-        loadingOverlay.style.display='none';
-        var cs=new CutsceneEngine(function(){
-          // Cutscene finished — start the game
-          cutscenePlayed=true;
-          gameState='playing';
-          engine.start();
-        });
-        cs.start();
-      }else{
-        gameState='playing';loadingOverlay.style.display='none';engine.start();
-      }
-    };
+    goFullscreen(); // Auto fullscreen on start
+    requestAnimationFrame(function(){engine=new GameEngine(canvas);engine.onReady=function(){gameState='playing';loadingOverlay.style.display='none';engine.start()};
       engine.onDeath=function(){gameState='dead';restartBtn.style.display='block'};
       engine.init().catch(function(){gameState='start';startScreen.style.display='flex';gameContainer.style.display='none'})})}
   function restartGame(){if(engine){engine.bustedShown=false;engine.restart();gameState='playing';restartBtn.style.display='none'}}
@@ -3286,7 +2799,14 @@ CutsceneEngine.prototype.skip=function(){
   bindTouch('tLeft','left');bindTouch('tRight','right');bindTouch('tGas','up');bindTouch('tBrk','brake');bindTouch('tRev','down');
   // Tap to skip mission intro
   canvas.addEventListener('touchstart',function(){if(engine&&engine.missionIntroTimer>0)engine.missionIntroTimer=0});
-  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(function(reg){
+        console.log('SW registered:',reg.scope);
+        reg.update();
+      }).catch(function(err){console.log('SW registration failed:',err)});
+    });
+  }
 })();
 </script>
 </body>
