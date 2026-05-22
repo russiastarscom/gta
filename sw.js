@@ -1,77 +1,64 @@
-// Service Worker for City Drive PWA
-var CACHE_NAME = 'city-drive-v2';
-var PRECACHE_URLS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './favicon-32.png',
-  './favicon-16.png',
-  './assets/image/icon-72.png',
-  './assets/image/icon-96.png',
-  './assets/image/icon-128.png',
-  './assets/image/icon-144.png',
-  './assets/image/icon-152.png',
-  './assets/image/icon-192.png',
-  './assets/image/icon-384.png',
-  './assets/image/icon-512.png',
-  './assets/voice/cs01_narration_prison.mp3',
-  './assets/voice/cs02_narration_accused.mp3',
-  './assets/voice/cs03_narration_free.mp3',
-  './assets/voice/cs04_viktor_recognize.mp3',
-  './assets/voice/cs05_viktor_cops.mp3',
-  './assets/voice/cs06_viktor_city.mp3',
-  './assets/voice/cs07_viktor_car.mp3',
-  './assets/voice/cs08_viktor_earn.mp3',
-  './assets/voice/cs09_narration_revenge.mp3'
+// Service Worker for City Drive PWA — PWABuilder Compatible
+const CACHE_NAME = 'city-drive-v2';
+const PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
-// Install — precache all assets
-self.addEventListener('install', function(event) {
+// Install: precache core shell
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
+    caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(PRECACHE_URLS);
-    }).then(function() {
-      return self.skipWaiting();
-    })
+    }).then(() => self.skipWaiting())
   );
 });
 
-// Activate — clean old caches
-self.addEventListener('activate', function(event) {
+// Activate: clean old caches
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(function(names) {
+    caches.keys().then((keys) => {
       return Promise.all(
-        names.filter(function(name) {
-          return name !== CACHE_NAME;
-        }).map(function(name) {
-          return caches.delete(name);
-        })
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
-    }).then(function() {
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch — cache first, then network
-self.addEventListener('fetch', function(event) {
+// Fetch: network-first for HTML, cache-first for assets
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // Only handle same-origin requests
+  if (url.origin !== location.origin) return;
+
+  // HTML pages: network first, fallback to cache
+  if (req.headers.get('accept') && req.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(req).then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        return response;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Static assets: cache first, fallback to network
   event.respondWith(
-    caches.match(event.request).then(function(cached) {
+    caches.match(req).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).then(function(response) {
-        // Cache new successful requests
-        if (response && response.status === 200 && response.type === 'basic') {
-          var responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, responseToCache);
-          });
+      return fetch(req).then((response) => {
+        // Cache successful responses for static assets
+        if (response.ok && (url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.mp3') || url.pathname.endsWith('.json') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }
         return response;
-      }).catch(function() {
-        // Offline fallback for navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
       });
     })
   );

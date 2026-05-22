@@ -1,45 +1,34 @@
-# City Drive — GTA Style
+# City Drive - GTA Style PWA
 
-## Запуск
+Top-down GTA-style driving game with neural network AI, missions, and open world city exploration.
 
-Открой `index.html` в браузере. Для PWA запусти через локальный сервер:
+## Installation
 
-```
-npx serve .
-```
+1. Host on any HTTPS server (GitHub Pages, Netlify, Vercel, etc.)
+2. Open in browser — the PWA will install automatically
+3. For APK: upload to [PWABuilder](https://www.pwabuilder.com/) to package as Android app
 
-Или любой другой статический сервер.
+## Features
 
-## Структура
+- 80x80 tile-based city with roads, buildings, parks, water
+- 5 missions: Street Race, Getaway, Delivery, Hitman, Taxi
+- Neural network AI with real backpropagation training
+- Emergency vehicles: ambulance + tow truck
+- Police chase system with wanted levels
+- Pedestrians, NPC traffic, drift physics
+- Touch controls for mobile
+- Full PWA support with offline caching
+- Landscape orientation optimized
 
-```
-city-drive/
-├── index.html          — Игра (единственный файл с всей логикой)
-├── manifest.json       — PWA манифест
-├── sw.js               — Service Worker (офлайн-кэш)
-├── assets/
-│   ├── tiles/          — Тайлы (генерируются автоматически, папка для кастомных)
-│   ├── image/          — Спрайты машин (генерируются автоматически, папка для кастомных)
-│   └── voice/          — Озвучка катсцен
-│       ├── cs01_narration_prison.mp3
-│       ├── cs02_narration_accused.mp3
-│       ├── cs03_narration_free.mp3
-│       ├── cs04_viktor_recognize.mp3
-│       ├── cs05_viktor_cops.mp3
-│       ├── cs06_viktor_city.mp3
-│       ├── cs07_viktor_car.mp3
-│       ├── cs08_viktor_earn.mp3
-│       └── cs09_narration_revenge.mp3
-```
+## Voice Acting
 
-## Управление
+Place MP3 files in `assets/voice/`:
+- `cs01.mp3` through `cs09.mp3`
 
-- **WASD / Стрелки** — Вождение
-- **Пробел** — Тормоз / Дрифт
-- **E** — Пропустить диалог миссии
-- **Тач** — Мобильные кнопки
+## Controls
 
-## Озвучка
-
-Положи файлы из списка выше в `assets/voice/`. Формат: MP3 или OGG.
-Когда файлы на месте — движок катсцены автоматически их подхватит.
+- **WASD / Arrow Keys** — Drive
+- **SPACE** — Brake / Drift
+- **E** — Skip mission dialogue
+- **R** — Restart after death
+- Touch controls on mobile
